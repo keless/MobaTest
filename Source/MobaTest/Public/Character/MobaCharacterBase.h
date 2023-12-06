@@ -2,16 +2,21 @@
 
 #pragma once
 
+#include "AbilitySystemInterface.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "AttributeSet.h"
+#include "AbilitySystemComponent.h" //zzz todo: prob dont need this in .h?
 #include "GameplayTagContainer.h"
-#include "AbilitySystemInterface.h"
+
 #include <MobaTest/MobaTest.h>
+
 
 // Generated headers must be last
 #include "MobaCharacterBase.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCharacterDiedDelegate, AMobaCharacterBase*, character);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCharacterHealthChangedPt2Delegate, AMobaCharacterBase*, character);
 
 
 UCLASS()
@@ -35,6 +40,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Moba|Character")
 	FCharacterDiedDelegate OnCharacterDied;
+
+	UPROPERTY(BlueprintAssignable, Category = "Moba|Character|Health")
+	FCharacterHealthChangedPt2Delegate OnCharacterHealthChangedPt2;
 
 	UFUNCTION(BlueprintCallable, Category = "Moba|Character")
 	virtual bool isAlive() const;
@@ -98,5 +106,9 @@ protected:
 	virtual void SetMana(float mana);
 	virtual void SetMaxMana(float maxMana);
 	virtual void SetCharacterLevel(int32 level);
+
+	
+	FDelegateHandle HealthChangedDelegateHandle;
+	virtual void HealthChanged(const FOnAttributeChangeData& data);
 
 };

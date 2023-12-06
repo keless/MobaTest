@@ -28,6 +28,9 @@ void AMobaCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (abilitySystemComponent.IsValid()) {
+		HealthChangedDelegateHandle = abilitySystemComponent->GetGameplayAttributeValueChangeDelegate(attributeSetBase->GetHealthAttribute()).AddUObject(this, &AMobaCharacterBase::HealthChanged);
+	}
 }
 
 void AMobaCharacterBase::AddCharacterAbilities() {
@@ -37,6 +40,9 @@ void AMobaCharacterBase::AddCharacterAbilities() {
 
 	for (TSubclassOf<UCharacterGameplayAbility>& startupAbility : characterAbilities) {
 		auto startupAbilityObject = startupAbility.GetDefaultObject();
+
+		UE_LOG(LogTemp, Log, TEXT("give startup ability"));
+
 		abilitySystemComponent->GiveAbility(FGameplayAbilitySpec(startupAbility, getAbilityLevel(startupAbilityObject->abilityID), static_cast<uint32>(startupAbilityObject->abilityInputID), this));
 	}
 
@@ -97,8 +103,12 @@ void AMobaCharacterBase::AddStartupEffects()
 	//zzz TODO: add "level" attribute to CharacterAttributeSetBase and use that here
 	auto characterLevel = 1;
 	for (TSubclassOf<UGameplayEffect>& startupEffect : startupEffects) {
+		UE_LOG(LogTemp, Log, TEXT("try add startup effect"));
+
 		auto newHandle = abilitySystemComponent->MakeOutgoingSpec(startupEffect, characterLevel, effectContext);
 		if (newHandle.IsValid()) {
+
+			UE_LOG(LogTemp, Log, TEXT("try apply startup effect"));
 			auto activeGEHandle = abilitySystemComponent->ApplyGameplayEffectSpecToTarget(*newHandle.Data.Get(), abilitySystemComponent.Get());
 		}
 	}
@@ -110,6 +120,8 @@ void AMobaCharacterBase::SetHealth(float health)
 {
 	if (attributeSetBase.IsValid()) {
 		attributeSetBase->SetHealth(health);
+
+		UE_LOG(LogTemp, Display, TEXT("Set Health Called"));
 	}
 }
 
@@ -141,6 +153,12 @@ void AMobaCharacterBase::SetCharacterLevel(int32 level)
 	}
 }
 
+void AMobaCharacterBase::HealthChanged(const FOnAttributeChangeData& data)
+{
+	UE_LOG(LogTemp, Log, TEXT("HealthChanged delegate -- broadcast pt2"));
+	OnCharacterHealthChangedPt2.Broadcast(this);
+}
+
 /*
 // Called every frame
 void AMobaCharacterBase::Tick(float DeltaTime)
@@ -148,13 +166,7 @@ void AMobaCharacterBase::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 }
-
-// Called to bind functionality to input
-void AMobaCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-}*/
+*/
 
 UAbilitySystemComponent* AMobaCharacterBase::GetAbilitySystemComponent() const
 {
